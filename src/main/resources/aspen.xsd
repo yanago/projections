@@ -1,0 +1,15 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="#RowsetSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="row">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="Description" use="optional"/>
+          <xs:attribute type="xs:float" name="Projected" use="optional"/>
+          <xs:attribute type="xs:float" name="Deposit" use="optional"/>
+          <xs:attribute type="xs:dateTime" name="MonthYear" use="optional"/>
+          <xs:attribute type="xs:float" name="Payment" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
