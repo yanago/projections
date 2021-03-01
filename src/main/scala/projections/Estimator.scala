@@ -5,6 +5,7 @@ import java.util.Locale
 import java.time.LocalDateTime
 import java.time.LocalDate
 import java.time.Month
+import java.io._
 
 object Estimator {
   def main(args: Array[String]) = {
@@ -42,7 +43,6 @@ object Estimator {
 
     //use scala's functional paradigm to group and display
     val prodActuals = parsedProjections zip parsedActuals
-    val estimates2 = prodActuals.groupBy(r => (r._1.ProjectionID, r._1.MonthYear.getMonth + "-" + r._1.MonthYear.getYear)).map(m => (m._1._1, m._2))
     val estimates = prodActuals.groupBy(r => (r._1.ProjectionID, r._1.MonthYear.getMonth + "-" + r._1.MonthYear.getYear)).mapValues(
       _.map(p => {
 
@@ -50,18 +50,38 @@ object Estimator {
           case c if c < 0 => "Withdawal"
           case _ => "Deposit"
         }
-        val deposits = "Deposit:" + p._1.Description + "," + p._1.Deposit
-        val withdrawals = "Withdrawal:" + p._1.Payment + "," + p._2.Amount + "," + p._1.Projected
-        val estimateRepprtMap = Map(p._1.MonthYear.getMonth + "-" + p._1.MonthYear.getYear -> List(deposits, withdrawals))
+        val deposits = "Deposit:," + p._1.Description + "," + p._1.Deposit + "\n"
+        val withdrawals = "Withdrawal:," + p._1.Payment + "," + p._2.Amount + "," + p._1.Projected
+        val estimateRepprtMap = Map(p._1.MonthYear.getMonth + "-" + p._1.MonthYear.getYear -> List[String](deposits, withdrawals))
         estimateRepprtMap
       }
-      )).map(rec => (Map(rec._1._1 -> rec._2.flatten.toMap)))
-    println(estimates.mkString(";"))
+      )).map(rec => Map[Int, Map[String, List[String]]](rec._1._1 -> rec._2.flatten.toMap))
 
-    //TODO
-    // - Persist above result into file
-    // - OR
-    // - Expose to  Rest API endpoint
+    val projectionsList = estimates.toList
+
+    //Save the resulting rows into CSV excel file
+    val reports = new PrintWriter(new File("projections.csv"))
+
+
+    val rowReports = new StringBuffer("Projection" + "," + "Month/Year" + "," + "Activity" + "," + "Estimated" + "," + "Actual" + "," + "Estimated Balance" + "\n")
+    projectionsList.map(projectionsMap => {
+      projectionsMap.foreach(x => {
+        rowReports.append(x._1 + "\n")
+
+        x._2 foreach (proj => {
+          rowReports.append("," + proj._1 + "\n")
+          val expenses = proj._2.map(r => r.split(",")) //.foreach(r=> rowReports.append(r))
+          expenses.foreach(r => rowReports.append(",," + r.mkString(",")))
+        })
+        rowReports.append("\n")
+      })
+    })
+
+    reports.write(rowReports.toString)
+    reports.close()
+
+    //println(estimates.mkString(";"))
+
 
   }
 }
